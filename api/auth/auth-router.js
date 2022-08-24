@@ -34,7 +34,7 @@ router.post("/register", checkPasswordLength, checkUsernameFree, async (req, res
   try {
     const { username, password } = req.body;
     const hash = bcrypt.hashSync(password, 12);
-    const newUser = await add({ username: username, password: hash });
+    const newUser = await add({ username, password: hash });
     console.log(newUser);
     res.status(201).json(newUser);
   } catch (err) {
@@ -57,10 +57,15 @@ router.post("/register", checkPasswordLength, checkUsernameFree, async (req, res
     "message": "Invalid credentials"
   }
  */
-router.post("/login", checkUsernameExists, async (req, res, next) => {
-  try {
-  } catch (err) {
-    next(err);
+router.post("/login", checkUsernameExists, (req, res, next) => {
+  const { password } = req.body;
+  if (bcrypt.compareSync(password, req.user.password)) {
+    //send the cookie to the client and make it set in the cookie store
+    //also make server store a session with a session id
+    req.session.user = req.user;
+    res.json({ message: `welcome ${req.user.username}!` });
+  } else {
+    next({ status: 401, message: "Invalid credentials" });
   }
 });
 /**
